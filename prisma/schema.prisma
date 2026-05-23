@@ -1,0 +1,113 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id               String            @id @default(uuid())
+  name             String?
+  email            String            @unique
+  password         String
+  reviews          Review[]
+  savedColleges    SavedCollege[]
+  savedComparisons SavedComparison[]
+  questions        Question[]
+  answers          Answer[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model College {
+  id              String         @id @default(uuid())
+  name            String
+  location        String
+  fees            Float          // Fees display parameter (e.g. average annual fees)
+  rating          Float          // Average review rating
+  image           String         // URL/path to the image
+  description     String
+  establishedYear Int
+  nirfRanking     Int?
+  ownership       String?        // "Government" | "Private"
+  courseTypes     String?        // Comma-separated list like "B.Tech,MBA,M.Tech"
+  courses         Course[]
+  placements      Placement[]
+  reviews         Review[]
+  savedByUsers    SavedCollege[]
+  questions       Question[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Course {
+  id        String   @id @default(uuid())
+  name      String
+  duration  String
+  fees      Float
+  collegeId String
+  college   College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+}
+
+model Placement {
+  id         String   @id @default(uuid())
+  avgSalary  Float    // in Lakhs Per Annum (LPA)
+  highSalary Float    // in Lakhs Per Annum (LPA)
+  recruiters String   // Comma-separated list of top recruiters (e.g. "Google,Microsoft,Apple")
+  collegeId  String
+  college    College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int      // 1 to 5
+  comment   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collegeId String
+  college   College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model SavedCollege {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collegeId String
+  college   College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, collegeId])
+}
+
+model SavedComparison {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collegeIds String   // Comma-separated list of college IDs compared (e.g. "id1,id2,id3")
+  createdAt  DateTime @default(now())
+}
+
+model Question {
+  id        String   @id @default(uuid())
+  title     String
+  content   String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collegeId String?
+  college   College? @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  answers   Answer[]
+  createdAt DateTime @default(now())
+}
+
+model Answer {
+  id         String   @id @default(uuid())
+  content    String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
